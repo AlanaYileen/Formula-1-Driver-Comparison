@@ -400,6 +400,42 @@ Promise.all([
         const g = svg.append("g")
             .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
+        //legend for radar chart
+        const legend = svg.append("g")
+            .attr("class", "radar-legend")
+            .attr("transform", `translate(${width - 150}, 20)`);
+        const box = 14;
+
+        if (data[0]) {
+            legend.append("rect")
+              .attr("x", 0)
+              .attr("y", 0)
+              .attr("width", box)
+              .attr("height", box)
+              .attr("fill", "#0C7BDC");
+            legend.append("text")
+              .attr("x", box + 8)
+              .attr("y", 11)
+              .attr("font-size", "12px")
+              .style("fill", "white")
+              .text(data[0].name);
+        }
+        if (data[1]) {
+          legend.append("rect")
+              .attr("x", 0)
+              .attr("y", 22)
+              .attr("width", box)
+              .attr("height", box)
+              .attr("fill", "#FFC20A");
+      
+          legend.append("text")
+              .attr("x", box + 8)
+              .attr("y", 33)
+              .attr("fill", "white")
+              .style("font-size", "13px")
+              .text(data[1].name);
+        }
+
         const angleSlice = (2 * Math.PI) / metrics.length;
 
         const gridLevels = 5;
