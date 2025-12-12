@@ -457,7 +457,7 @@ Promise.all([
         }
 
         const angleSlice = (2 * Math.PI) / metrics.length;
-
+        //draw circle for radar chart (steps of 20%)
         const gridLevels = 5;
         for (let level = 1; level <= gridLevels; level++) {
             g.append("circle")
@@ -465,7 +465,7 @@ Promise.all([
                 .attr("fill", "none")
                 .attr("stroke", "#555")
         }
-
+        //add precentage labels
         for (let level = 1; level <= gridLevels; level++) {
             const r = radius * (level / gridLevels);
             g.append("text")
@@ -477,7 +477,7 @@ Promise.all([
               .style("fill", "#aaa")
               .text((level * 20) + "%");
           }
-
+        //draw polygon for each metric
         metrics.forEach((metric, i) => {
             const angle = i * angleSlice - Math.PI / 2;
 
@@ -513,8 +513,9 @@ Promise.all([
                     d3.select("#radar-tooltip").classed("hidden", true);
                 });
         });
-
+        
         function radarPath(d, color) {
+            //create one point per metric
             const points = metrics.map((m, i) => {
                 const angle = i * angleSlice - Math.PI / 2;
                 const value = d[m.key] || 0;
