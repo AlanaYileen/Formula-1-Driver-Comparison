@@ -4,9 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>F1 Driver Comparison</title>
+  <!--load d3.js-->
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!--linking css-->
   <link rel="stylesheet" href="style.css" />
+  <!--load css for choices.js (dropdown styling)-->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+  <!--load JS functionality for Choices.js (<select> elements are fancy dropdowns)-->
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 </head>
 
@@ -26,10 +30,10 @@
       <div id="driver1"></div>
     </div>
 
-    <!-- CENTER BAR PLOT PANEL -->
+    <!-- CENTER PANEL -->
     <div class="bars-center">
       <div id="radar-chart"></div> <!--radar chart-->
-      <div id="bars-container"></div>
+      <div id="bars-container"></div> <!--bar chart-->
     </div>
 
     <!-- DRIVER 2 PANEL -->
@@ -44,13 +48,18 @@
 
   </div>
 
+  <!-- modal (popup overlay) to enlarge radar chart, hidden by default-->
   <div id="radar-modal" class="radar-modal hidden">
+    <!-- content of overlay-->
     <div class="radar-modal-content">
+      <!-- closing button for modal; hide modal-->
       <span id="radar-modal-close">&times;</span>
+      <!--larger radar chart will be drawn when modal is opened -->
       <div id="radar-chart-large"></div>
     </div>
   </div>
 
+  <!--tooltip for radar-chart-->
   <div id="radar-tooltip" class="radar-tooltip hidden"></div>
   
   <script src="script.js"></script>
