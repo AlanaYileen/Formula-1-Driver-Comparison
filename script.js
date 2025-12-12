@@ -7,22 +7,26 @@ Promise.all([
   ]).then(([drivers, races, results, statusCSV]) => {
   
     // initialize data structures
+
+    //map race year to raceid
     const raceYear = {};
     races.forEach(r => raceYear[r.raceId] = +r.year);
 
+    // mao status to statusId
     const status = {};
     statusCSV.forEach(s => status[s.statusId] = s.status);
-  
+
+    //basic driver stats
     const driverStats = {};
     drivers.forEach(d => {
       driverStats[d.driverId] = {
         id: d.driverId,
         name: `${d.forename} ${d.surname}`,
-        photo: `data/images/${d.forename}_${d.surname}.png`,
+        photo: `data/images/${d.forename}_${d.surname}.png`, //image
         nationality: d.nationality,
         dob: d.dob,
         age: calcAge(d.dob),
-        seasons: new Set(),
+        seasons: new Set(), //set to avoid dups
         seasonCount: 0,
         wins: 0,
         fastestLaps: 0,
@@ -34,23 +38,27 @@ Promise.all([
   
     //Process results (compute wins, dnfs, points, seasons, podiums, etc.)
     results.forEach(r => {
+    // retrieve driver associated with each result
       const d = driverStats[r.driverId];
       if (!d) return;
-  
-      d.races += 1;
-  
-      if (+r.positionOrder === 1) d.wins += 1;
-      if (r.fastestLap === "1") d.fastestLaps += 1;
 
+    //count races
+      d.races += 1;
+      //count wins
+      if (+r.positionOrder === 1) d.wins += 1;
+        // count fastest laps
+      if (r.fastestLap === "1") d.fastestLaps += 1;
+    //count total points
       d.totalPoints = (d.totalPoints || 0) + (+r.points || 0);
+        //count pdiums
       if (+r.positionOrder >= 1 && +r.positionOrder <= 3) {
         d.podiums = (d.podiums || 0) + 1;
       }
-  
+  //count DNFs
       if (r.statusId && status[r.statusId] && status[r.statusId] !== "Finished") {
         d.dnfs = (d.dnfs || 0) + 1;
       }
-
+    //add season & season points
       const year = raceYear[r.raceId];
       d.seasons.add(year);
       d.seasonPoints[year] = (d.seasonPoints[year] || 0) + (+r.points || 0);
@@ -62,18 +70,18 @@ Promise.all([
       const year = raceYear[r.raceId];
       if (!seasons[year]) seasons[year] = {};
     });
-  
+  //add each driver's points to each season
     Object.values(driverStats).forEach(d => {
       Object.entries(d.seasonPoints).forEach(([year, pts]) => {
         seasons[year][d.id] = pts;
       });
     });
-  
+  // determine season champion (sort descending -> first entry =champion)
     Object.values(seasons).forEach(season => {
       const championId = Object.entries(season).sort((a,b)=>b[1]-a[1])[0][0];
       driverStats[championId].championships += 1;
     });
-
+//count seasons
     Object.values(driverStats).forEach(d => {
         d.seasonCount = d.seasons.size;
     });
@@ -110,12 +118,16 @@ Promise.all([
   
     updateUI();
   
-    // UI Update function
+    // UI Update function -> runs every time the user selects a driver! what appears??
+    // o selection: blanks, 
+    // one driver -> basic stats, single radar, 
+    // two drivers -> everything
     
     function updateUI() {
+        //get driver ids
         const id1 = select1.property("value");
         const id2 = select2.property("value");
-    
+        //checkk if ids exist in driverstats
         const has1 = id1 && driverStats[id1];
         const has2 = id2 && driverStats[id2];
     
@@ -123,7 +135,7 @@ Promise.all([
         if (!has1 && !has2) {
             d3.select("#driver1").html("<p>Please select a driver.</p>");
             d3.select("#driver2").html("<p>Please select a driver.</p>");
-            d3.select("#bars-container").html("");
+            d3.select("#bars-container").html(""); 
             d3.select("#radar-chart").html("");
             return;
         }
@@ -152,7 +164,7 @@ Promise.all([
     
             // Single-driver radar
             renderRadar([d2]);
-    
+            //show no bars
             d3.select("#bars-container").html("");
             return;
         }
@@ -160,27 +172,29 @@ Promise.all([
         // CASE 3: Both drivers selected
         const d1 = driverStats[id1];
         const d2 = driverStats[id2];
-    
+        // show both stats
         renderDriverPanel("#driver1", d1);
         renderDriverPanel("#driver2", d2);
-    
+        //show both radar metrics
         const radarData = computeRadarMetrics(d1, d2);
         renderRadar(radarData);
-    
+        //show bar chart
         renderBars(d1, d2);
     }
     
   
-    // DRIVER PANEL (name, photo, stats table)
+    // DRIVER PANEL -> displays everything about driver (name, photo, stats table)
+    //paramters(CSS selector sel, driver data object from driverStats d)
     function renderDriverPanel(sel, d) {
       const panel = d3.select(sel);
+        // clear previous content
       panel.html("");
-  
+      //add name
       panel.append("div")
         .attr("class", "driver-name")
         .style("color", "white")
         .text(d.name);
-  
+      // add image container & image
       const photoContainer = panel.append("div")
         .attr("class", "photo-container");
 
@@ -188,6 +202,7 @@ Promise.all([
         .attr("class", "driver-photo")
         .attr("src", d.photo)
         .attr("alt", d.name + " photo")
+          // if error (no photo found) replace box with 'No photo'
         .on("error", function () {
            d3.select(this).remove();  // Remove img if broken
            photoContainer.append("div")
@@ -195,9 +210,8 @@ Promise.all([
             .text("No photo");
         });
 
-  
+      // add driver statistics white box below
       const stats = panel.append("div").attr("class", "basic-stats");
-  
       stats.html(`
         <div><strong>Nationality:</strong> ${d.nationality}</div>
         <div><strong>Age:</strong> ${d.age}</div>
@@ -210,28 +224,28 @@ Promise.all([
     }
   
     // BAR CHART 
-
     function renderBars(d1, d2) {
         const container = d3.select("#bars-container");
+        // remove existing content
         container.html("");
-    
+        //layout
         const panelWidth = container.node().getBoundingClientRect().width;
         const barHeight = 18;
         const rowHeight = 70;
-        const centerX = panelWidth / 2;
+        const centerX = panelWidth / 2; //that's were the metric label is displayed
         const labelPadding = 70;
         const valuePadding = 40;
         const safeLeftSpace = centerX - labelPadding - valuePadding;
         const safeRightSpace = panelWidth - centerX - labelPadding - valuePadding;
         const maxSafeBarWidth = Math.min(safeLeftSpace, safeRightSpace);
-
+        //find max value to scale bars
         const maxVal = d3.max([
             d1.seasonCount, d2.seasonCount,
             d1.races, d2.races,
             d1.wins, d2.wins,
             d1.championships, d2.championships
         ]);
-    
+        //scale: input maxVal, output pixel range 
         const x = d3.scaleLinear()
             .domain([0, maxVal])
             .range([0, maxSafeBarWidth]);
@@ -243,15 +257,15 @@ Promise.all([
             { label: "Wins", left: d1.wins, right: d2.wins },
             { label: "Championships", left: d1.championships, right: d2.championships }
         ];
-    
+        // create svg (broad chart layout)
         const svg = container.append("svg")
             .attr("width", panelWidth)
             .attr("height", metrics.length * rowHeight);
-    
+        // draw each row (loop over eacg metric: m metric, i row index)
         metrics.forEach((m, i) => {
-            const y = i * rowHeight + 20;
+            const y = i * rowHeight + 20; //vertical position of row
     
-            const leftWidth = x(m.left);
+            const leftWidth = x(m.left); //length of bars
             const rightWidth = x(m.right);
     
             // Left bar
@@ -312,7 +326,7 @@ Promise.all([
             .text(d2.name);
     }
     
-    // Formating seasins
+    // Formatting seasins (set is converted to pretty year ranges)
     function formatSeasons(seasonSet) {
       const years = Array.from(seasonSet).sort((a, b) => a - b);
       if (years.length === 0) return "N/A";
