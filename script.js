@@ -328,14 +328,17 @@ Promise.all([
     
     // Formatting seasins (set is converted to pretty year ranges)
     function formatSeasons(seasonSet) {
+        // convert set to array and sort ascending
       const years = Array.from(seasonSet).sort((a, b) => a - b);
+        // if no seasons no output
       if (years.length === 0) return "N/A";
-  
+      // ranges strores final time ranges
       let ranges = [];
       let start = years[0];
       let prev = years[0];
-  
+      // loop beginning from second season (cause 1st season is already handled)
       for (let i = 1; i < years.length; i++) {
+          //if current year not exactly one year after previous -> end season block
         if (years[i] !== prev + 1) {
           ranges.push(start === prev ? `${start}` : `${start}–${prev}`);
           start = years[i];
@@ -360,14 +363,16 @@ Promise.all([
 
     // compute radar chart metrics
     function computeRadarMetrics(d1,d2) {
+        // count how many times each driver qualified in top3
         const top3_1 = countTop3Qualifying(results, d1.id);
         const top3_2 = countTop3Qualifying(results, d2.id);
-
+        // bundle both drivers 
         const drivers = [d1,d2].map((d,i) => {
+            //assign t3 value
             const top3 = i == 0 ? top3_1 : top3_2;
             const races = d.races || 1; // avoid div by 0
-            const seasons = d.seasons.size || 1;
-
+            const seasons = d.seasons.size || 1; //avoid div by 0
+            // compute radar metrics
             return {
                 name: d.name,
                 win: d.wins/races,
@@ -393,8 +398,9 @@ Promise.all([
 
     //rRADAR CHART
     function renderRadar(data, containerId = "#radar-chart", width = 420, height = 420) {
+        //clear old vis first
         d3.select(containerId).html("");
-
+        //define metrics
         const metrics = [
             { key: "win", label: "Win Rate [%]" },
             { key: "podium", label: "Podium Rate [%]" },
@@ -403,14 +409,14 @@ Promise.all([
             { key: "pointsProductivity", label: "Points Efficiency [%]" },
             { key: "p3qualy", label: "Top 3 Qualifying Rate [%]" }
         ];
-
+        //layout
         const radius = Math.min(width, height) / 2 - 60;
 
         const svg = d3.select(containerId)
             .append("svg")
             .attr("width", width)
             .attr("height", height)
-
+        // center origin of chart
         const g = svg.append("g")
             .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
